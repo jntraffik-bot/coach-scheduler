@@ -41,7 +41,9 @@ const oauth2 = new google.auth.OAuth2(
   process.env.REDIRECT_URI ||
     "https://scheduler-production-38f1.up.railway.app/oauth-callback"
 );
-oauth2.setCredentials({ refresh_token: GOOGLE_REFRESH_TOKEN });
+if (GOOGLE_REFRESH_TOKEN) {
+  oauth2.setCredentials({ refresh_token: GOOGLE_REFRESH_TOKEN });
+}
 const calendar = google.calendar({ version: "v3", auth: oauth2 });
 
 // ── Claude: parse a text message into structured booking intent ──
@@ -125,6 +127,10 @@ async function findEventByClient(clientName) {
 
 // ── Webhook: Quo posts incoming messages here ───────────────────
 app.post("/webhook", async (req, res) => {
+  if (!GOOGLE_REFRESH_TOKEN) {
+    console.warn("Webhook received but GOOGLE_REFRESH_TOKEN is not set — skipping calendar operations.");
+    return res.status(200).json({ message: "Calendar not configured. Complete /auth flow to set GOOGLE_REFRESH_TOKEN." });
+  }
   try {
     const msg = req.body?.data?.object;
     // only react to inbound messages
@@ -173,6 +179,10 @@ app.post("/webhook", async (req, res) => {
 
 // ── Reminder sweep: run hourly, text anyone with a session in ~24h ──
 app.get("/run-reminders", async (req, res) => {
+  if (!GOOGLE_REFRESH_TOKEN) {
+    console.warn("Run-reminders called but GOOGLE_REFRESH_TOKEN is not set — skipping calendar operations.");
+    return res.status(200).json({ message: "Calendar not configured. Complete /auth flow to set GOOGLE_REFRESH_TOKEN." });
+  }
   try {
     const in24 = new Date(Date.now() + 24 * 60 * 60 * 1000);
     const in25 = new Date(Date.now() + 25 * 60 * 60 * 1000);
