@@ -224,10 +224,22 @@ app.get("/auth", (req, res) => {
   res.redirect(url);
 });
 app.get("/oauth-callback", async (req, res) => {
-  const { tokens } = await oauth2.getToken(req.query.code);
-  res.send(
-    `<pre>Your refresh token (save as GOOGLE_REFRESH_TOKEN):\n\n${tokens.refresh_token}</pre>`
-  );
+  if (!req.query.code) {
+    return res.status(400).send(
+      `<pre>Error: No authorization code received from Google.\nMake sure you are redirected here from the /auth flow.</pre>`
+    );
+  }
+  try {
+    const { tokens } = await oauth2.getToken(req.query.code);
+    res.send(
+      `<pre>Your refresh token (save as GOOGLE_REFRESH_TOKEN):\n\n${tokens.refresh_token}</pre>`
+    );
+  } catch (err) {
+    console.error("OAuth callback error:", err);
+    res.status(500).send(
+      `<pre>Error exchanging authorization code for tokens:\n\n${err.message}\n\nCommon causes:\n- The code has already been used (codes are single-use)\n- The code has expired (visit /auth to get a fresh one)\n- The redirect URI in your Google Cloud credentials does not match this app's URL</pre>`
+    );
+  }
 });
 
 app.get("/", (_, res) => res.send("Coaching scheduler is running."));
