@@ -41,7 +41,7 @@ const oauth2 = new google.auth.OAuth2(
   process.env.REDIRECT_URI ||
     "https://scheduler-production-38f1.up.railway.app/oauth-callback"
 );
-oauth2.setCredentials({ refresh_token: GOOGLE_REFRESH_TOKEN });
+if (GOOGLE_REFRESH_TOKEN) { oauth2.setCredentials({ refresh_token: GOOGLE_REFRESH_TOKEN }); }
 const calendar = google.calendar({ version: "v3", auth: oauth2 });
 
 // ── Claude: parse a text message into structured booking intent ──
