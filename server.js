@@ -221,6 +221,7 @@ app.get("/auth", (req, res) => {
     prompt: "consent",
     scope: ["https://www.googleapis.com/auth/calendar"],
   });
+  console.log("Authorization URL:", url);
   res.redirect(url);
 });
 app.get("/oauth-callback", async (req, res) => {
